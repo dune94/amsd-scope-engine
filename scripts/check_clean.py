@@ -10,8 +10,8 @@ def candidates(root):
     """Files git would commit: tracked + untracked-not-ignored (git ls-files), or the whole tree when not a git repo."""
     r = subprocess.run(['git', '-C', str(root), 'ls-files', '--cached', '--others', '--exclude-standard'], capture_output=True, text=True)
     if r.returncode == 0 and r.stdout.strip(): return [root / f for f in r.stdout.splitlines()]
-    skip = {'.git', 'config.local', 'runs', '__pycache__', '.pytest_cache'}
-    return [p for p in root.rglob('*') if p.is_file() and not (skip & set(p.relative_to(root).parts)) and p.name != '.env' and '.bak-' not in p.name]
+    skip = {'.git', 'config.local', 'runs', '__pycache__', '.pytest_cache', '.venv', 'node_modules'}   # not git: skip private and install artifacts
+    return [p for p in root.rglob('*') if p.is_file() and not (skip & set(p.relative_to(root).parts)) and p.name not in ('.env', '.install-marker') and '.bak-' not in p.name]
 
 def scan(root, words):
     rx = re.compile('|'.join(re.escape(w) for w in words), re.I); hits = []
