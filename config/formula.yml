@@ -1,0 +1,28 @@
+# PI-12 v3.9: Score = Scope + Complexity + Risk -> SP band. Planning calibration applies to planning inputs only.
+blast_radius:
+  external_weight: 2         # BR = changed + importing + tests + 2 x external systems
+scope:
+  levels: [Low, Medium, High, Very High]
+  cuts: [6, 24, 60]          # Low <= 6, Medium <= 24, High <= 60, Very High > 60
+  points: [0, 3, 5, 8]
+complexity:                  # by number of drivers: first row whose max >= count
+  - {max: 0, level: Low, points: 0}
+  - {max: 2, level: Medium, points: 1}
+  - {max: null, level: High, points: 3}
+risk:
+  - {max: 1, level: Low, points: 0}
+  - {max: 2, level: Medium, points: 2}
+  - {max: null, level: High, points: 4}
+bands:                       # score -> SP
+  - {max: 1, sp: 1}
+  - {max: 2, sp: 2}
+  - {max: 4, sp: 3}
+  - {max: 8, sp: 5}
+  - {max: 12, sp: 8}
+  - {max: null, sp: 13}
+planning:
+  br_multiplier: 1.4
+  complexity_extra: 1
+  risk_extra: 1
+pert:                        # O = BASE BR, M = BASE x multiplier, P = UPPER x multiplier; expected = (O + 4M + P) / 6
+  weights: [1, 4, 1]

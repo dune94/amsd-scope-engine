@@ -1,0 +1,18 @@
+name: pick
+step: "1d"
+description: Required and alternative codelines, from the shortlist evidence
+model: claude-opus-5-5
+system_instructions: pick.si.md
+prompt: pick.prompt.md
+schema: pick.schema.json
+# inline = system instructions + prompt sent as one message, in inline_order (the way the PI-12 runs sent them);
+# append / replace = system instructions sent as a system prompt (llm.system_prompt_flags in config/scope.yml)
+si_mode: inline
+inline_order: [si, prompt]
+tools: []
+allowed_tools: []
+max_turns: null
+images: true          # ticket images are given to the agent (Read tool, attachments folder only)
+timeout_s: 300
+memory_mb: 2048
+params: {}

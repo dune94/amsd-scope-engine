@@ -1,0 +1,17 @@
+name: investigate
+step: "2a"
+description: Change sites per codeline (BASE / UPPER), external systems, open questions
+model: claude-opus-5-5
+system_instructions: investigate.si.md
+prompt: investigate.prompt.md
+schema: investigate.schema.json
+si_mode: inline
+inline_order: [prompt, si]
+tools: [Bash]
+allowed_tools: ["Bash(codegraph explore:*)", "Bash(codegraph query:*)", "Bash(codegraph callers:*)", "Bash(codegraph callees:*)",
+                "Bash(codegraph impact:*)", "Bash(codegraph node:*)", "Bash(rg:*)"]
+max_turns: 20         # max_tool_calls + 5
+images: false         # works inside the codeline snapshot; gets the extracted ticket text, not the images
+timeout_s: 1200
+memory_mb: 2048
+params: {max_tool_calls: 15}

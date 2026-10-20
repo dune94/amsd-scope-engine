@@ -1,0 +1,51 @@
+# Scope engine run configuration. Neutral defaults only: organisation-specific values (codeline names, tags, org pattern, checked folders)
+# live in config.local/scope.yml (untracked) and are merged over this file. Paths expand ~ and $VARS (set in .env).
+paths:
+  codelines_root: $SCOPE_CODELINES_ROOT         # local clones of the codelines (read only)
+  runs_dir: runs                                # one folder per run; snapshots and downloads are deleted by the run
+  bounded: $SCOPE_BOUNDED                       # memory-cap wrapper (installed by the installer)
+  proof_unchanged: []     # folders checked after every run: no file newer than the run start
+
+memory:
+  driver_mb: 1536        # the whole run: ~/.claude/bin/bounded --want 1536 -- python3 -m scope ...
+  index_mb: 2048         # each CodeGraph index build
+  # each agent call: memory_mb in agents/<name>.yml
+
+llm:
+  command: [claude, -p, --strict-mcp-config, --mcp-config, '{"mcpServers":{}}', --output-format, json]
+  result_field: result
+  model_flag: --model
+  tools_flag: --tools
+  allowed_tools_flag: --allowedTools
+  max_turns_flag: --max-turns
+  system_prompt_flags: {append: --append-system-prompt-file, replace: --system-prompt-file}
+  image_tool: Read
+  image_turns_extra: 3   # max turns for an agent given images = images + this
+
+codelines:
+  origin_pattern: ''     # regex on the clone's origin URL; empty = every git repo under the root
+  exclude: []
+  not_product: []
+  brand_codelines: {}    # ticket title tag -> codeline name
+  brand_tags_for_flag: []
+  shortlist: 7
+  large_repo_files: 10000     # above this: no snapshot / index, rg evidence only
+  rg_exclude_globs: ['!**/node_modules/**', '!**/.codegraph/**']
+  codegraph_query_limit: 10
+  evidence_max_chars: 60000
+
+jira:
+  fields: [summary, description, attachment]
+  confluence_path: /wiki
+
+inputs:
+  attachments:
+    max_files: 20
+    max_total_mb: 25
+    max_pages: 30            # pages / slides read per document
+    images: [.png, .jpg, .jpeg, .gif, .webp]
+    text: [.pdf, .docx, .md, .txt, .pptx]
+    # anything else (spreadsheets, .ppt, .doc, archives) is listed as "not read"
+  confluence:
+    follow_links: false      # pages linked from the story only
+    max_pages: 10

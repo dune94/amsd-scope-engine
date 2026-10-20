@@ -1,0 +1,6 @@
+{"type": "object", "required": ["base"],
+ "properties": {"base": {"$ref": "#/$defs/set"}, "upper": {"$ref": "#/$defs/set"},
+   "external_systems_base": {"type": "array", "items": {"type": "string"}}, "external_systems_upper": {"type": "array", "items": {"type": "string"}},
+   "sites": {"type": "array", "items": {"type": "object"}}, "open_questions": {"type": "array", "items": {"type": "string"}}},
+ "$defs": {"set": {"type": "object", "properties": {"logic": {"$ref": "#/$defs/files"}, "exports_only": {"$ref": "#/$defs/files"}, "new": {"$ref": "#/$defs/files"}}},
+           "files": {"type": "array", "items": {"type": "string"}}}}

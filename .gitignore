@@ -1,0 +1,9 @@
+runs/
+__pycache__/
+*.pyc
+.pytest_cache/
+.env
+config.local/
+*.bak-*
+*.bak
+.venv/

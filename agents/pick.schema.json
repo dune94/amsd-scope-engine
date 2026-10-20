@@ -1,0 +1,3 @@
+{"type": "object", "required": ["required"],
+ "properties": {"required": {"$ref": "#/$defs/list"}, "alternatives": {"$ref": "#/$defs/list"}, "rejected": {"$ref": "#/$defs/list"}},
+ "$defs": {"list": {"type": "array", "items": {"type": "object", "required": ["repo"], "properties": {"repo": {"type": "string"}, "reason": {"type": "string"}}}}}}

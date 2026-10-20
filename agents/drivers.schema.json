@@ -1,0 +1,5 @@
+{"type": "object", "required": ["complexity", "risk"],
+ "properties": {"complexity": {"$ref": "#/$defs/list"}, "risk": {"$ref": "#/$defs/list"}},
+ "$defs": {"list": {"type": "array", "items": {"type": "object", "required": ["driver", "quote"],
+   "properties": {"driver": {"type": "integer", "minimum": 1, "maximum": 5}, "name": {"type": "string"}, "date": {"type": "string"},
+                  "source": {"type": "string"}, "quote": {"type": "string"}}}}}}
