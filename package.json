@@ -1,0 +1,8 @@
+{
+  "name": "scope-engine",
+  "version": "0.1.0",
+  "description": "Installer entry for the scope engine (a Python project). Run: npx github:<owner>/<repo> --repo <git URL> --dest ./scope-engine",
+  "bin": { "scope-engine-install": "npm-package/scope-engine/bin/scope-engine.cjs" },
+  "files": ["npm-package/", "bin/", "requirements.txt"],
+  "engines": { "node": ">=18" }
+}
