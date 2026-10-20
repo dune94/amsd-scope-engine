@@ -34,6 +34,9 @@ codelines:
   codegraph_query_limit: 10
   evidence_max_chars: 60000
 
+drivers:
+  min_quote_words: 4     # a quote shorter than this is not accepted as evidence (a lone word proves nothing)
+
 jira:
   fields: [summary, description, attachment]
   confluence_path: /wiki
