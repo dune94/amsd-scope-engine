@@ -11,7 +11,7 @@ def test_every_agent_loads_with_its_files():
 
 def test_model_pinned_per_agent():
     assert {n: config.Agent(n).model for n in config.AGENTS} == {
-        'nouns': 'claude-haiku-5-5', 'drivers': 'claude-sonnet-5-5', 'pick': 'claude-opus-5-5', 'investigate': 'claude-opus-5-5'}
+        'nouns': 'claude-haiku-5-5', 'drivers': 'claude-sonnet-5-5', 'pick': 'claude-sonnet-5-5', 'investigate': 'claude-sonnet-5-5'}
 
 def test_scope_and_formula_config_load():
     s, f = config.load('scope'), config.load('formula')

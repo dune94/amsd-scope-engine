@@ -1,7 +1,7 @@
 name: pick
 step: "1d"
 description: Required and alternative codelines, from the shortlist evidence
-model: claude-opus-5-5
+model: claude-sonnet-5-5
 system_instructions: pick.si.md
 prompt: pick.prompt.md
 schema: pick.schema.json
