@@ -16,7 +16,10 @@ Every run writes `result.json` in its run folder and prints a line `result: <pat
 | `blast_required` | `base`, `upper` and `by_codeline`: the blast radius summed over the required codelines. |
 | `planning` | `base_br`, `upper_br`, `planning_br`, `c_count`, `r_count`, `scope`, `complexity`, `risk`, `planning_sp` (the estimate), `sp_as_measured`, `pert`. Absent when no required codeline had a change. |
 | `pert` | A copy of `planning.pert`, or `null`: `o_br`, `m_br`, `p_br`, `expected_br`, `o_sp`, `m_sp`, `p_sp`, `expected_sp`. Optimistic is BASE, most likely and pessimistic carry the planning calibration. |
+| `error` | Present only when the run failed: `<ExceptionType>: <message>`. A failed run still writes `result.json` (with `schema_version`, `story_hash` when the story was read, and no `planning`). A consumer must treat a result with `error` as a failure and show that text as the reason. |
 | `flags` | Human-readable warnings (for example a required codeline with no BASE change was moved to the alternatives). |
 | `proof` | Checks that the run changed nothing outside its own folder. |
 
 Story pack (`--build-pack`, `--story-pack`): a folder with `pack.json` (`schema_version` 1, `key`, `title`, `text`, `images` as paths relative to the folder, `inputs`, `reviewer_notes`, `built_at`) and an `images/` folder. A run from a pack never fetches the ticket and never deletes the pack folder.
+
+Exit status: a run started with `--story-pack` exits 1 when it failed (and prints `result: <path>` first); runs started without it keep exit 0 on failure, as before. Issue keys must look like `ABC-123` (letters, digits, underscore, then `-` and digits); anything else is refused before any work starts, because keys become folder names and process patterns.

@@ -2,7 +2,7 @@
 # code-around detective (2a investigate per codeline, 2b blast radius, 2c planning SP + PERT). Agents, prompts, models, caps and
 # formula come from agents/ and config/. Live clones are only read (git archive, rg); their .codegraph indexes are never opened.
 # Snapshots and downloads are deleted at the end of every run; a run keeps only small result files.
-import collections, json, os, pathlib, re, shlex, shutil, subprocess, time
+import collections, glob, json, os, pathlib, re, shlex, shutil, subprocess, time
 from . import config, contract, drivers, jira, llm, manifest, pack as storypack, score
 from .measure import Index, SRC, measure
 
@@ -194,14 +194,18 @@ def go(key, drivers_only=False, pack_path=None):
         res['blast_required'] = dict(base=bsum, upper=usum, by_codeline={n: blast(n, 'base') for n in req})
         if req: res['planning'] = score.planning(bsum, usum, res['drivers']['c_count'], res['drivers']['r_count'])
         return res
+    except BaseException as e:   # the result must say why there is no estimate (contract: `error`)
+        res['error'] = f'{type(e).__name__}: {e}'
+        raise
     finally:
-        subprocess.run(['pkill', '-f', f'codegraph.*{R}/snap'], capture_output=True)
+        subprocess.run(['pkill', '-f', f'codegraph.*{re.escape(str(R))}/snap'], capture_output=True)
         shutil.rmtree(R / 'snap', ignore_errors=True)
         if owned: shutil.rmtree(inp, ignore_errors=True)
         ep = []
         for d in S['paths']['proof_unchanged']:
             ep += run(['find', str(config.path(d)), '-path', '*/node_modules', '-prune', '-o', '-type', 'f', '-newer', str(R / 'marker'), '-print']).stdout.split()
-        cg = run(['bash', '-c', f'find {ROOT}/*/.codegraph -type f -newer {R}/marker 2>/dev/null']).stdout.split()
+        cg_dirs = glob.glob(f'{ROOT}/*/.codegraph')   # argv, not a shell: nothing derived from the key is ever parsed by a shell
+        cg = run(['find', *cg_dirs, '-type', 'f', '-newer', str(R / 'marker')]).stdout.split() if cg_dirs else []
         changed = [k for k, v in status_before.items() if run(['git', '-C', str(ROOT / k), 'status', '--porcelain']).stdout != v]
         res['proof'] = dict(unchanged_dirs_files_changed=ep, live_codegraph_files_changed=cg, clones_with_changed_status=changed)
         contract.add_contract_fields(res)
