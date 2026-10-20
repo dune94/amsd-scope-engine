@@ -3,7 +3,7 @@
 # formula come from agents/ and config/. Live clones are only read (git archive, rg); their .codegraph indexes are never opened.
 # Snapshots and downloads are deleted at the end of every run; a run keeps only small result files.
 import collections, json, os, re, shlex, shutil, subprocess, time
-from . import config, drivers, jira, llm, manifest, score
+from . import config, contract, drivers, jira, llm, manifest, score
 from .measure import Index, SRC, measure
 
 S = config.load('scope'); C = S['codelines']
@@ -86,6 +86,7 @@ def go(key, drivers_only=False):
     res = {'key': key, 'agents': {n: dict(model=a.model, step=a.step) for n, a in A.items()}}
     try:
         title, text, images, inputs = jira.story(key, inp)
+        contract.stamp_story(res, title, text)
         res.update(title=title, inputs=inputs)
         (R / 'story.txt').write_text(f'Title: {title}\n{text}')
         # 1e Complexity / Risk drivers
@@ -191,6 +192,7 @@ def go(key, drivers_only=False):
         cg = run(['bash', '-c', f'find {ROOT}/*/.codegraph -type f -newer {R}/marker 2>/dev/null']).stdout.split()
         changed = [k for k, v in status_before.items() if run(['git', '-C', str(ROOT / k), 'status', '--porcelain']).stdout != v]
         res['proof'] = dict(unchanged_dirs_files_changed=ep, live_codegraph_files_changed=cg, clones_with_changed_status=changed)
+        contract.add_contract_fields(res)
         json.dump(res, open(R / 'result.json', 'w'), indent=1, default=str)
         if not drivers_only and res.get('codelines') is not None: manifest.write(R, res)
         log.close()
