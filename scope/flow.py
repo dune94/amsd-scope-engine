@@ -2,8 +2,8 @@
 # code-around detective (2a investigate per codeline, 2b blast radius, 2c planning SP + PERT). Agents, prompts, models, caps and
 # formula come from agents/ and config/. Live clones are only read (git archive, rg); their .codegraph indexes are never opened.
 # Snapshots and downloads are deleted at the end of every run; a run keeps only small result files.
-import collections, json, os, re, shlex, shutil, subprocess, time
-from . import config, contract, drivers, jira, llm, manifest, score
+import collections, json, os, pathlib, re, shlex, shutil, subprocess, time
+from . import config, contract, drivers, jira, llm, manifest, pack as storypack, score
 from .measure import Index, SRC, measure
 
 S = config.load('scope'); C = S['codelines']
@@ -77,20 +77,31 @@ def shortlist(nouns, title, text):
     return short, named, hits, {k: co[k] for k in rank[:10]}, rank
 
 
-def go(key, drivers_only=False):
+def resolve_story(key, run_dir, pack_path):
+    """(title, text, images, inputs, working directory for the agents, owned). With a story pack nothing is fetched and the pack's
+    folder is the working directory; it is never ours to delete. Without one the ticket is read from Jira into run_dir/inputs."""
+    if pack_path:
+        title, text, images, inputs = storypack.load_pack(pack_path)
+        return title, text, images, inputs, pathlib.Path(pack_path).parent, False
+    inp = pathlib.Path(run_dir) / 'inputs'
+    title, text, images, inputs = jira.story(key, inp)
+    return title, text, images, inputs, inp, True
+
+
+def go(key, drivers_only=False, pack_path=None):
     runs = config.path(S['paths']['runs_dir'])
     R = runs / f"{'drivers' if drivers_only else 'run'}-{key}-{time.strftime('%Y%m%dT%H%M%S')}"
-    (R / 'snap').mkdir(parents=True); inp = R / 'inputs'
+    (R / 'snap').mkdir(parents=True); inp = R / 'inputs'; work = inp; owned = pack_path is None
     log = open(R / 'commands.log', 'w'); (R / 'marker').touch()
     status_before = {p.name: run(['git', '-C', str(p), 'status', '--porcelain']).stdout for p in clones()}
     res = {'key': key, 'agents': {n: dict(model=a.model, step=a.step) for n, a in A.items()}}
     try:
-        title, text, images, inputs = jira.story(key, inp)
+        title, text, images, inputs, work, owned = resolve_story(key, R, pack_path)
         contract.stamp_story(res, title, text)
         res.update(title=title, inputs=inputs)
         (R / 'story.txt').write_text(f'Title: {title}\n{text}')
         # 1e Complexity / Risk drivers
-        ans, errs = llm.call(A['drivers'], dict(title=title, description=text), cwd=str(inp), images=images, log=log, raw_path=R / 'drivers.raw.json')
+        ans, errs = llm.call(A['drivers'], dict(title=title, description=text), cwd=str(work), images=images, log=log, raw_path=R / 'drivers.raw.json')
         kept, dropped = drivers.validate(ans, f'{title}\n{text}')
         res['drivers'] = dict(complexity=kept['complexity'], risk=kept['risk'], dropped=dropped, schema_errors=errs,
                               c_count=len(kept['complexity']), r_count=len(kept['risk']))
@@ -98,7 +109,7 @@ def go(key, drivers_only=False):
         if ans is None: raise SystemExit('drivers agent returned no JSON – stopping')
         if drivers_only: return res
         # 1a nouns
-        ans, errs = llm.call(A['nouns'], dict(title=title, description=text), cwd=str(inp), images=images, log=log)
+        ans, errs = llm.call(A['nouns'], dict(title=title, description=text), cwd=str(work), images=images, log=log)
         nouns = (ans or {}).get('nouns', []); res['nouns'] = nouns; print('1a nouns:', nouns, flush=True)
         if not nouns: raise SystemExit('no nouns returned – stopping')
         # 1b shortlist
@@ -124,7 +135,7 @@ def go(key, drivers_only=False):
         res['evidence'] = ev
         # 1d pick
         pick, errs = llm.call(A['pick'], dict(title=title, description=text, evidence=json.dumps(ev, indent=1)[:C['evidence_max_chars']]),
-                              cwd=str(inp), images=images, log=log)
+                              cwd=str(work), images=images, log=log)
         pick = pick or {}; res['pick'] = pick; res['pick_schema_errors'] = errs
         req = [x['repo'] for x in pick.get('required', []) if x.get('repo') in short]
         alt = [x['repo'] for x in pick.get('alternatives', []) if x.get('repo') in short and x.get('repo') not in req]
@@ -185,7 +196,8 @@ def go(key, drivers_only=False):
         return res
     finally:
         subprocess.run(['pkill', '-f', f'codegraph.*{R}/snap'], capture_output=True)
-        shutil.rmtree(R / 'snap', ignore_errors=True); shutil.rmtree(inp, ignore_errors=True)
+        shutil.rmtree(R / 'snap', ignore_errors=True)
+        if owned: shutil.rmtree(inp, ignore_errors=True)
         ep = []
         for d in S['paths']['proof_unchanged']:
             ep += run(['find', str(config.path(d)), '-path', '*/node_modules', '-prune', '-o', '-type', 'f', '-newer', str(R / 'marker'), '-print']).stdout.split()
