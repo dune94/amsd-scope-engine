@@ -34,6 +34,9 @@ codelines:
   codegraph_query_limit: 10
   evidence_max_chars: 60000
 
+pack:
+  max_notes_chars: 4000   # reviewer notes longer than this are cut when added to a story pack
+
 drivers:
   min_quote_words: 4     # a quote shorter than this is not accepted as evidence (a lone word proves nothing)
 
